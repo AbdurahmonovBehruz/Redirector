@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirector</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --bg: #f5f5f7;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --text: #1d1d1f;
+            --border-glow: rgba(255, 255, 255, 1); /* Ярко-белый для края */
+            --shadow: rgba(0, 0, 0, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            perspective: 1000px; /* Для 3D эффекта приподнятия */
+        }
+    body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.96); /* Насколько сильно темнеет фон */
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* Если мышка над контейнером, активируем фон */
+body:has(.glass-card:hover)::after {
+    opacity: 1;
+}
+
+
+        .main-container {
+            width: 95%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        /* Основной блок */
+        .glass-card {
+            position: relative;
+            background: var(--card-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 36px;
+            padding: 40px 30px;
+            border: 0.5px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 30px var(--shadow);
+            
+            /* Плавное приподнятие */
+            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), 
+                        box-shadow 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            overflow: hidden;
+            cursor: default;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-10px) rotateX(2deg); /* Приподнимается и наклоняется */
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Общий стиль для подсветки краев (карточка + кнопки) */
+        .glow-border {
+            position: relative;
+        }
+
+        .glow-border::before {
+            content: "";
+            position: absolute;
+            inset: -1.5px; /* Толщина светящейся линии */
+            border-radius: inherit;
+            padding: 1.5px; 
+            background: radial-gradient(
+                150px circle at var(--x, 50%) var(--y, 50%),
+                rgba(255, 255, 255, 0.8),
+                transparent 80%
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .glow-border:hover::before {
+            opacity: 1;
+        }
+
+        h2#dynamicTitle {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.6px;
+            margin-bottom: 30px;
+        }
+
+        .button-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        /* Ультра-тонкие кнопки */
+        .glass-button {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px 34px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text);
+            text-decoration: none;
+            background: rgba(0, 0, 0, 0.07);
+            border: 0.5px solid rgba(0, 0, 0, 0.05);
+            border-radius: 19px;
+            overflow: hidden;
+            transition: all 0.5s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .glass-button:hover {
+            background: rgba(255, 255, 255, 0.7);
+            transform: scale(1.1); /* Кнопка расширяется при наведении */
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Быстрый блик при наведении (пролетающая полоса) */
+        .glass-button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -150%;
+            width: 30%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(255, 255, 255, 1) 50%,
+                transparent 100%
+            );
+            transform: skewX(-20deg);
+            transition: left 0.4s ease-in-out;
+        }
+
+        .glass-button:hover::after {
+            left: 150%;
+        }
+
+        .glass-button i {
+            margin-right: 10px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .footer {
+            margin-top: 70px;
+            font-size: 10px;
+            font-weight: 700;
+            color: rgba(0, 0, 0, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        /* Весь футер светлеет при наведении на карточку */
+.main-container:has(.glass-card:hover) .footer {
+    color: rgba(255, 255, 255, 0.8);
+    transition: color 0.4s ease;
+}
+
+/* Ссылка Behruz становится толще и блестит */
+.footer a {
+    font-weight: 800; /* Жирнее */
+    transition: all 0.4s ease;
+    position: relative;
+    display: inline-block;
+}
+
+.main-container:has(.glass-card:hover) .footer a {
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* Эффект блеска/свечения */
+}
+
+        .loading { opacity: 0.2; filter: blur(4px); }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="glass-card glow-border" id="mainCard">
+            <h2 id="dynamicTitle" class="loading">Loading...</h2>
+            
+            <div class="button-stack">
+                <a href="https://leaderboar.github.io/edit1" target="_blank" class="glass-button glow-border js-track">
+                    <i class="fa-solid fa-gear"></i> CONTROL PANEL
+                </a>
+                <a href="https://piima-im.github.io/EnglishVocabulary1" target="_blank" class="glass-button glow-border js-track">
+                    <i class="fa-solid fa-eye"></i> SPECTATOR MODE
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            Made and designed by <a href="https://AbdurahmonovBehruz.github.io/Info">Behruz</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        // Функция для отслеживания мыши на любом элементе
+        const setupTracking = (element) => {
+            element.addEventListener('mousemove', (e) => {
+                const rect = element.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                element.style.setProperty('--x', `${x}px`);
+                element.style.setProperty('--y', `${y}px`);
+            });
+        };
+
+        // Включаем трекинг для главной карточки и кнопок
+        setupTracking(document.getElementById('mainCard'));
+        document.querySelectorAll('.js-track').forEach(btn => setupTracking(btn));
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBFKNH17HTqnIQk6HMDxBWmUCmiPwpf3D8",
+            authDomain: "namelist-1bf07.firebaseapp.com",
+            databaseURL: "https://namelist-1bf07-default-rtdb.europe-west1.firebasedatabase.app/",
+            projectId: "namelist-1bf07",
+            storageBucket: "namelist-1bf07.firebasestorage.app",
+            messagingSenderId: "325136855046",
+            appId: "1:325136855046:web:bac259ab885ca8381fd387"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const titleRef = ref(db, "settings/title");
+        const titleEl = document.getElementById("dynamicTitle");
+
+        onValue(titleRef, (snapshot) => {
+            titleEl.innerText = snapshot.val() || "SYSTEM ACCESS";
+            titleEl.classList.remove("loading");
+        });
+    </script>
+</body>
+</html>
